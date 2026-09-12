@@ -22,15 +22,16 @@ class CPU extends MultiIOModule {
     You need to create the classes for these yourself
     */
   val IFIDBarrier  = Module(new IFIDBarrier).io
-   val IDEXBarrier  = Module(new IDEXBarrier).io
-  // val EXBarrier  = Module(new EXBarrier).io
-  // val MEMBarrier = Module(new MEMBarrier).io
+  val IDEXBarrier  = Module(new IDEXBarrier).io
+  val EXMEMBarrier  = Module(new EXMEMBarrier).io
+  val MEMWBBarrier = Module(new MEMWBBarrier).io
 
   val IF  = Module(new InstructionFetch)
   val ID  = Module(new InstructionDecode)
   val EX  = Module(new Execute)
   val MEM = Module(new MemoryFetch)
-  // val WB  = Module(new Execute) (You may not need this one?)
+  val WB = Module(new WriteBack)
+
 
 
   /**
@@ -54,6 +55,8 @@ class CPU extends MultiIOModule {
   // --------------------------------------------------
   connectIFID()
   connectIDEX()
+  connectEXMEM()
+  connectMEMWB()
 
   private def connectIFID(): Unit = {
     // set up the IFID barrier functionality (driving the signals)
@@ -74,6 +77,8 @@ class CPU extends MultiIOModule {
     IDEXBarrier.op2SelectIn := ID.io.op2Select
     IDEXBarrier.immTypeIn := ID.io.immType
     IDEXBarrier.ALUopIn := ID.io.ALUop
+    IDEXBarrier.registerData1In := ID.io.registerData1
+    IDEXBarrier.registerData2In := ID.io.registerData2
 
     EX.io.instructionIn := IDEXBarrier.instructionOut
     EX.io.PCIn := IDEXBarrier.PCOut
@@ -83,6 +88,33 @@ class CPU extends MultiIOModule {
     EX.io.op2Select := IDEXBarrier.op2SelectOut
     EX.io.immType := IDEXBarrier.immTypeOut
     EX.io.aluOp := IDEXBarrier.ALUopOut
+    EX.io.registerData1 := IDEXBarrier.registerData1Out
+    EX.io.registerData2 := IDEXBarrier.registerData2Out
+  }
+
+  private def connectEXMEM(): Unit = {
+    EXMEMBarrier.instructionIn := EX.io.instructionOut
+    EXMEMBarrier.PCIn := EX.io.PCOut
+    EXMEMBarrier.controlSignalsIn := EX.io.controlSignalsOut
+    EXMEMBarrier.aluResultIn := EX.io.aluResult
+    EXMEMBarrier.writeDataIn := EX.io.registerData2
+
+    MEM.io.instructionIn := EXMEMBarrier.instructionOut
+    MEM.io.PCIn := EXMEMBarrier.PCOut
+    MEM.io.controlSignalsIn := EXMEMBarrier.controlSignalsOut
+    MEM.io.aluResultIn := EXMEMBarrier.aluResultOut
+  }
+
+  private def connectMEMWB(): Unit = {
+    MEMWBBarrier.instructionIn := MEM.io.instructionOut
+    MEMWBBarrier.controlSignalsIn := MEM.io.controlSignalsOut
+    MEMWBBarrier.aluResultIn := MEM.io.aluResultOut
+    MEMWBBarrier.memDataIn := MEM.io.memDataOut
+
+    WB.io.instructionIn := MEMWBBarrier.instructionOut
+    WB.io.controlSignalsIn := MEMWBBarrier.controlSignalsOut
+    WB.io.aluResultIn := MEMWBBarrier.aluResultOut
+    WB.io.memDataIn := MEMWBBarrier.memDataOut
   }
 
 }

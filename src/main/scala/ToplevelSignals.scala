@@ -1,7 +1,8 @@
 package FiveStage
+import Chisel.MuxLookup
 import chisel3._
 import chisel3.core.Wire
-import chisel3.util.{ BitPat, Cat }
+import chisel3.util.{BitPat, Cat, is, switch}
 
 
 class Instruction extends Bundle(){
@@ -27,6 +28,17 @@ class Instruction extends Bundle(){
     bubbled.instruction := instruction
     bubbled.instruction(6, 0) := BitPat.bitPatToUInt(BitPat("b0010011"))
     bubbled
+  }
+
+  def getImmediate(immFormat: UInt): SInt = {
+    MuxLookup(immFormat, 0.S(32.W), Seq(
+      ImmFormat.ITYPE -> immediateIType,
+      ImmFormat.STYPE -> immediateSType,
+      ImmFormat.BTYPE -> immediateBType,
+      ImmFormat.UTYPE -> immediateUType,
+      ImmFormat.JTYPE -> immediateJType,
+      ImmFormat.SHAMT -> immediateZType
+    ))
   }
 
 }

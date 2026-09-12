@@ -30,6 +30,8 @@ class InstructionDecode extends MultiIOModule {
       val immType = Output(UInt(3.W))
       val ALUop = Output(UInt(4.W))
 
+      val registerData1 = Output(UInt(32.W))
+      val registerData2 = Output(UInt(32.W))
     }
   )
 
@@ -50,6 +52,9 @@ class InstructionDecode extends MultiIOModule {
   registers.io.writeEnable  := false.B
   registers.io.writeAddress := 0.U
   registers.io.writeData    := 0.U
+
+  io.registerData1 := registers.io.readData1
+  io.registerData2 := registers.io.readData2
 
   decoder.instruction := io.instructionIn
 

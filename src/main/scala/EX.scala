@@ -16,11 +16,17 @@ class Execute extends MultiIOModule {
       val op2Select = Input(UInt(1.W))
       val immType = Input(UInt(3.W))
       val aluOp = Input(UInt(4.W))
+      val registerData1 = Input(UInt(32.W))
+      val registerData2 = Input(UInt(32.W))
 
       val instructionOut = Output(new Instruction())
       val PCOut = Output(UInt(32.W))
       val controlSignalsOut = Output(new ControlSignals())
       val aluResult = Output(UInt(32.W))
+      val writeData = Output(UInt(32.W))
+
+
+
     }
   )
 
@@ -28,8 +34,10 @@ class Execute extends MultiIOModule {
   val ALU = Module(new ALU()).io
 
   ALU.aluOp := io.aluOp
-  ALU.in1 := Mux(io.op1Select === Op1Select.rs1, io.instructionIn.registerRs1, 0.U)
-  ALU.in2 := Mux(io.op2Select === Op2Select.rs2, io.instructionIn.registerRs2, io.instructionIn.immediateIType.asUInt())
+  ALU.in1 := Mux(io.op1Select === Op1Select.rs1, io.registerData1, 0.U)
+
+  // Add logic for
+  ALU.in2 := Mux(io.op2Select === Op2Select.rs2, io.registerData2, io.instructionIn.getImmediate(io.immType).asUInt())
 
   io.aluResult := ALU.aluResult
 
@@ -38,6 +46,7 @@ class Execute extends MultiIOModule {
   io.instructionOut := io.instructionIn
   io.PCOut := io.PCIn
   io.controlSignalsOut := io.controlSignalsIn
+  io.writeData := io.registerData2
 
   dontTouch(io.aluResult)
   dontTouch(io.immType)
