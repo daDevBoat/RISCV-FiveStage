@@ -28,7 +28,45 @@ class Instruction extends Bundle(){
     bubbled.instruction(6, 0) := BitPat.bitPatToUInt(BitPat("b0010011"))
     bubbled
   }
+
 }
+
+object InstrType {
+  // R-type
+  val ADD  = 0.U(5.W)
+  val SUB  = 1.U(5.W)
+  val AND  = 2.U(5.W)
+  val OR   = 3.U(5.W)
+  val XOR  = 4.U(5.W)
+  val SLT  = 5.U(5.W)
+  val SLTU = 6.U(5.W)
+  val SRA  = 7.U(5.W)
+  val SRL  = 8.U(5.W)
+  val SLL  = 9.U(5.W)
+
+  // I-type arithmetic
+  val ADDI  = 10.U(5.W)
+  val ANDI  = 11.U(5.W)
+  val ORI   = 12.U(5.W)
+  val XORI  = 13.U(5.W)
+  val SLTI  = 14.U(5.W)
+  val SLTIU = 15.U(5.W)
+  val SRAI  = 16.U(5.W)
+  val SRLI  = 17.U(5.W)
+  val SLLI  = 18.U(5.W)
+
+  // U-type
+  val LUI   = 19.U(5.W)
+  val AUIPC = 20.U(5.W)
+
+  // Memory
+  val LW = 21.U(5.W)
+  val SW = 22.U(5.W)
+
+  val NOP = 31.U(5.W)
+}
+
+
 object Instruction {
   def NOP: Instruction = {
     val w = Wire(new Instruction)
