@@ -50,13 +50,17 @@ class Execute extends MultiIOModule {
 
   // Jump logic
   when(io.controlSignalsIn.jump) {
+    io.aluResult := io.PCIn + 4.U   // Not technically an ALU result, but then I dont have to worry with another selection etc
+    io.PCOverride := true.B
     when(io.instructionIn.opcode === "b1101111".U) {
-      printf(p"Write: ${io.controlSignalsIn.regWrite}\n")
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateJType.pad(32)).asUInt()
-      io.aluResult := io.PCIn + 4.U   // Not technically an ALU result, but then I dont have to worry with another selection etc
-      io.PCOverride := true.B
+    }.elsewhen(io.instructionIn.opcode === "b1100111".U) {
+      printf("JALR!\n")
+      io.jumpAddress := (io.registerData1.asSInt() + io.instructionIn.immediateIType.pad(32)).asUInt() & "hfffffffe".U
     }
   }
+
+
 
 
   dontTouch(io.aluResult)
