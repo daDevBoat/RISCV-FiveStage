@@ -38,7 +38,6 @@ class Execute extends MultiIOModule {
 
   // Add logic for
   ALU.in2 := Mux(io.op2Select === Op2Select.rs2, io.registerData2, io.instructionIn.getImmediate(io.immType).asUInt())
-
   io.aluResult := ALU.aluResult
 
 

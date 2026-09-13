@@ -30,7 +30,7 @@ class CPU extends MultiIOModule {
   val ID  = Module(new InstructionDecode)
   val EX  = Module(new Execute)
   val MEM = Module(new MemoryFetch)
-  val WB = Module(new WriteBack)
+  //val WB = Module(new WriteBack)
 
 
 
@@ -57,6 +57,7 @@ class CPU extends MultiIOModule {
   connectIDEX()
   connectEXMEM()
   connectMEMWB()
+  connectWBID()
 
   private def connectIFID(): Unit = {
     // set up the IFID barrier functionality (driving the signals)
@@ -103,6 +104,7 @@ class CPU extends MultiIOModule {
     MEM.io.PCIn := EXMEMBarrier.PCOut
     MEM.io.controlSignalsIn := EXMEMBarrier.controlSignalsOut
     MEM.io.aluResultIn := EXMEMBarrier.aluResultOut
+    MEM.io.writeData := EXMEMBarrier.writeDataOut
   }
 
   private def connectMEMWB(): Unit = {
@@ -110,11 +112,12 @@ class CPU extends MultiIOModule {
     MEMWBBarrier.controlSignalsIn := MEM.io.controlSignalsOut
     MEMWBBarrier.aluResultIn := MEM.io.aluResultOut
     MEMWBBarrier.memDataIn := MEM.io.memDataOut
+  }
 
-    WB.io.instructionIn := MEMWBBarrier.instructionOut
-    WB.io.controlSignalsIn := MEMWBBarrier.controlSignalsOut
-    WB.io.aluResultIn := MEMWBBarrier.aluResultOut
-    WB.io.memDataIn := MEMWBBarrier.memDataOut
+  private def connectWBID(): Unit = {
+    ID.io.writeEnable := MEMWBBarrier.controlSignalsOut.regWrite
+    ID.io.writeAddress := MEMWBBarrier.instructionOut.registerRd
+    ID.io.writeData := Mux(MEMWBBarrier.controlSignalsOut.memRead, MEMWBBarrier.memDataOut, MEMWBBarrier.aluResultOut)
   }
 
 }

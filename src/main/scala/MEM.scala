@@ -22,6 +22,7 @@ class MemoryFetch() extends MultiIOModule {
       val PCIn = Input(UInt(32.W))
       val controlSignalsIn = Input(new ControlSignals())
       val aluResultIn = Input(UInt(32.W))
+      val writeData = Input(UInt(32.W))
 
       val instructionOut = Output(new Instruction())
       val PCOut = Output(UInt(32.W))
@@ -53,7 +54,15 @@ class MemoryFetch() extends MultiIOModule {
   io.aluResultOut := io.aluResultIn
   io.memDataOut := 0.U
 
+  DMEM.io.dataAddress := io.aluResultIn
   DMEM.io.dataIn      := 0.U
-  DMEM.io.dataAddress := 0.U
   DMEM.io.writeEnable := false.B
+
+  when(io.controlSignalsIn.memRead) {
+    io.memDataOut := DMEM.io.dataOut
+    printf(p"memDataOut = ${io.memDataOut} and address = ${io.aluResultIn}\n")
+  }.elsewhen(io.controlSignalsIn.memWrite) {
+    DMEM.io.dataIn := io.writeData
+    DMEM.io.writeEnable := true.B
+  }
 }

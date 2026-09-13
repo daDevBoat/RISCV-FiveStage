@@ -22,6 +22,7 @@ class Instruction extends Bundle(){
   def immediateUType = Cat(instruction(31, 12), 0.U(12.W)).asSInt
   def immediateJType = Cat(instruction(31), instruction(19, 12), instruction(20), instruction(30, 25), instruction(24, 21), 0.U(1.W)).asSInt
   def immediateZType = instruction(19, 15).zext
+  def immediateShamtType = instruction(24, 20).asSInt()
 
   def bubble(): Instruction = {
     val bubbled = Wire(new Instruction)
@@ -37,7 +38,7 @@ class Instruction extends Bundle(){
       ImmFormat.BTYPE -> immediateBType,
       ImmFormat.UTYPE -> immediateUType,
       ImmFormat.JTYPE -> immediateJType,
-      ImmFormat.SHAMT -> immediateZType
+      ImmFormat.SHAMT -> immediateShamtType
     ))
   }
 
@@ -132,13 +133,13 @@ object branchType {
 object Op1Select {
   val rs1 = 0.asUInt(1.W)
   val PC  = 1.asUInt(1.W)
-  val DC  = 0.asUInt(1.W)
+  val DCOp1  = 0.asUInt(1.W)
 }
 
 object Op2Select {
   val rs2 = 0.asUInt(1.W)
   val imm = 1.asUInt(1.W)
-  val DC  = 0.asUInt(1.W)
+  val DCOp2  = 0.asUInt(1.W)
 }
 
 
