@@ -25,6 +25,7 @@ class Execute extends MultiIOModule {
       val aluResult = Output(UInt(32.W))
       val writeData = Output(UInt(32.W))
       val jumpAddress = Output(UInt(32.W))
+      val PCOverride = Output(Bool())
 
 
     }
@@ -35,6 +36,8 @@ class Execute extends MultiIOModule {
   io.PCOut := io.PCIn
   io.controlSignalsOut := io.controlSignalsIn
   io.writeData := io.registerData2
+  io.jumpAddress := 0.U
+  io.PCOverride := false.B
 
   // Set up and use the ALU
   val ALU = Module(new ALU()).io
@@ -46,13 +49,12 @@ class Execute extends MultiIOModule {
   io.aluResult := ALU.aluResult
 
   // Jump logic
-  io.jumpAddress := 0.U
-
   when(io.controlSignalsIn.jump) {
     when(io.instructionIn.opcode === "b1101111".U) {
       printf(p"Write: ${io.controlSignalsIn.regWrite}\n")
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateJType.pad(32)).asUInt()
       io.aluResult := io.PCIn + 4.U   // Not technically an ALU result, but then I dont have to worry with another selection etc
+      io.PCOverride := true.B
     }
   }
 
