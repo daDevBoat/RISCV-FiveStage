@@ -24,11 +24,17 @@ class Execute extends MultiIOModule {
       val controlSignalsOut = Output(new ControlSignals())
       val aluResult = Output(UInt(32.W))
       val writeData = Output(UInt(32.W))
-
+      val jumpAddress = Output(UInt(32.W))
 
 
     }
   )
+
+  // Drive the inputs along
+  io.instructionOut := io.instructionIn
+  io.PCOut := io.PCIn
+  io.controlSignalsOut := io.controlSignalsIn
+  io.writeData := io.registerData2
 
   // Set up and use the ALU
   val ALU = Module(new ALU()).io
@@ -36,16 +42,20 @@ class Execute extends MultiIOModule {
   ALU.aluOp := io.aluOp
   ALU.in1 := Mux(io.op1Select === Op1Select.rs1, io.registerData1, 0.U)
 
-  // Add logic for
   ALU.in2 := Mux(io.op2Select === Op2Select.rs2, io.registerData2, io.instructionIn.getImmediate(io.immType).asUInt())
   io.aluResult := ALU.aluResult
 
+  // Jump logic
+  io.jumpAddress := 0.U
 
-  // Drive the inputs along
-  io.instructionOut := io.instructionIn
-  io.PCOut := io.PCIn
-  io.controlSignalsOut := io.controlSignalsIn
-  io.writeData := io.registerData2
+  when(io.controlSignalsIn.jump) {
+    when(io.instructionIn.opcode === "b1101111".U) {
+      printf(p"Write: ${io.controlSignalsIn.regWrite}\n")
+      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateJType.pad(32)).asUInt()
+      io.aluResult := io.PCIn + 4.U   // Not technically an ALU result, but then I dont have to worry with another selection etc
+    }
+  }
+
 
   dontTouch(io.aluResult)
   dontTouch(io.immType)

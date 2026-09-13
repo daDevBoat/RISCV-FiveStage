@@ -38,11 +38,7 @@ class InstructionFetch extends MultiIOModule {
   testHarness.PC := IMEM.testHarness.requestedAddress
 
 
-  /**
-    * TODO: Your code here.
-    * 
-    * You should expand on or rewrite the code below.
-    */
+
   io.PC := PC
   IMEM.io.instructionAddress := PC
 

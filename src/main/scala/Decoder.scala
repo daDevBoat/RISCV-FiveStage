@@ -77,7 +77,13 @@ class Decoder() extends Module {
 
     // Memory
     LW     -> List(Y,        Y,       N,        N,      N,    branchType.DC, rs1,       imm,       ITYPE,             ALUOps.ADD),
-    SW     -> List(N,        N,       Y,        N,      N,    branchType.DC, rs1,       imm,       STYPE,             ALUOps.ADD)
+    SW     -> List(N,        N,       Y,        N,      N,    branchType.DC, rs1,       imm,       STYPE,             ALUOps.ADD),
+
+    // Jumping
+    JAL    -> List(Y,        N,       N,        N,      Y,    branchType.DC, rs1,       imm,       JTYPE,             ALUOps.DC),
+    //SW     -> List(N,        N,       Y,        N,      N,    branchType.DC, rs1,       imm,       STYPE,             ALUOps.ADD)
+
+
   )
 
 
