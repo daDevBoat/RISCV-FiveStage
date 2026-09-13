@@ -23,6 +23,7 @@ class MemoryFetch() extends MultiIOModule {
       val controlSignalsIn = Input(new ControlSignals())
       val aluResultIn = Input(UInt(32.W))
       val writeData = Input(UInt(32.W))
+      val memoryAddress = Input(UInt(32.W))
 
       val instructionOut = Output(new Instruction())
       val PCOut = Output(UInt(32.W))
@@ -42,26 +43,22 @@ class MemoryFetch() extends MultiIOModule {
   testHarness.DMEMpeek    := DMEM.io.dataOut
   testHarness.testUpdates := DMEM.testHarness.testUpdates
 
-
-  /**
-    * Your code here.
-    */
-
-
   io.instructionOut := io.instructionIn
   io.PCOut := io.PCIn
   io.controlSignalsOut := io.controlSignalsIn
   io.aluResultOut := io.aluResultIn
   io.memDataOut := 0.U
 
-  DMEM.io.dataAddress := io.aluResultIn
+  DMEM.io.dataAddress := io.memoryAddress
   DMEM.io.dataIn      := 0.U
   DMEM.io.writeEnable := false.B
 
   when(io.controlSignalsIn.memRead) {
     io.memDataOut := DMEM.io.dataOut
-    printf(p"memDataOut = ${io.memDataOut} and address = ${io.aluResultIn}\n")
+    //printf(p"memDataOut = ${io.memDataOut} and address = ${DMEM.io.dataAddress} \n")
   }.elsewhen(io.controlSignalsIn.memWrite) {
+    // Uses the ALU result that is stalled on cycle
+    DMEM.io.dataAddress := io.aluResultIn
     DMEM.io.dataIn := io.writeData
     DMEM.io.writeEnable := true.B
   }

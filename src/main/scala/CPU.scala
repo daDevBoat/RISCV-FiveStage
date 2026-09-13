@@ -105,6 +105,7 @@ class CPU extends MultiIOModule {
     MEM.io.controlSignalsIn := EXMEMBarrier.controlSignalsOut
     MEM.io.aluResultIn := EXMEMBarrier.aluResultOut
     MEM.io.writeData := EXMEMBarrier.writeDataOut
+    MEM.io.memoryAddress := EXMEMBarrier.memoryAddress
   }
 
   private def connectMEMWB(): Unit = {

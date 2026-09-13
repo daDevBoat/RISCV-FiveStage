@@ -114,6 +114,7 @@ class EXMEMBarrier extends Module {
       val PCOut = Output(UInt(32.W))
       val controlSignalsOut = Output(new ControlSignals())
       val aluResultOut = Output(UInt(32.W))
+      val memoryAddress = Output(UInt(32.W))
       val writeDataOut = Output(UInt(32.W))
     }
   )
@@ -135,6 +136,9 @@ class EXMEMBarrier extends Module {
   io.controlSignalsOut := controlSignalsReg
   io.aluResultOut := aluResultReg
   io.writeDataOut := writeDataReg
+
+  // Driving the memory address since the memory takes on cycle to fetch data
+  io.memoryAddress := io.aluResultIn
 }
 
 class MEMWBBarrier extends Module {
