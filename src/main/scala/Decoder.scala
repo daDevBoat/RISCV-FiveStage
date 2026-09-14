@@ -80,11 +80,16 @@ class Decoder() extends Module {
     SW     -> List(N,        N,       Y,        N,      N,    branchType.DC, rs1,       imm,       STYPE,             ALUOps.ADD),
 
     // Jumping
-    JAL    -> List(Y,        N,       N,        N,      Y,    branchType.DC, rs1,       imm,       JTYPE,             ALUOps.DC),
+    JAL    -> List(Y,        N,       N,        N,      Y,    branchType.DC, rs1,       imm,       UTYPE,             ALUOps.DC),
     JALR   -> List(Y,        N,       N,        N,      Y,    branchType.DC, rs1,       imm,       ITYPE,             ALUOps.DC),
 
-
-
+    // Branching
+    BEQ    -> List(N,        N,       N,        Y,      N,    branchType.beq, rs1,       rs2,      STYPE,             ALUOps.SUB),
+    BNE    -> List(N,        N,       N,        Y,      N,    branchType.neq, rs1,       rs2,      BTYPE,             ALUOps.SUB),
+    BLT    -> List(N,        N,       N,        Y,      N,    branchType.lt,  rs1,       rs2,      STYPE,             ALUOps.SLT),
+    BGE    -> List(N,        N,       N,        Y,      N,    branchType.gte, rs1,       rs2,      STYPE,             ALUOps.SLT),
+    BLTU   -> List(N,        N,       N,        Y,      N,    branchType.ltu, rs1,       rs2,      STYPE,            ALUOps.SLTU),
+    BGEU   -> List(N,        N,       N,        Y,      N,    branchType.gteu,rs1,       rs2,      STYPE,            ALUOps.SLTU),
   )
 
 

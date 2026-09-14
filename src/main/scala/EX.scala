@@ -52,13 +52,45 @@ class Execute extends MultiIOModule {
   when(io.controlSignalsIn.jump) {
     io.aluResult := io.PCIn + 4.U   // Not technically an ALU result, but then I dont have to worry with another selection etc
     io.PCOverride := true.B
-    when(io.instructionIn.opcode === "b1101111".U) {
+
+    when(io.instructionIn.opcode === "b1101111".U) {  // JAR
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateJType.pad(32)).asUInt()
-    }.elsewhen(io.instructionIn.opcode === "b1100111".U) {
-      printf("JALR!\n")
+    }.elsewhen(io.instructionIn.opcode === "b1100111".U) {  // JAL
       io.jumpAddress := (io.registerData1.asSInt() + io.instructionIn.immediateIType.pad(32)).asUInt() & "hfffffffe".U
     }
   }
+
+  // Branch logic
+
+  when(io.controlSignalsIn.branch && io.instructionIn.opcode === "b1100011".U) {
+    when(io.instructionIn.funct3 === "b0".U && ALU.zeroFlag) {    // BEQ
+      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
+      io.PCOverride := true.B
+    }
+    when(io.instructionIn.funct3 === "b1".U && ALU.zeroFlag === false.B) {    // BNE
+      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
+      io.PCOverride := true.B
+    }
+    when(io.instructionIn.funct3 === "b100".U && ALU.aluResult === 1.U) {   // BLT
+      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
+      io.PCOverride := true.B
+    }
+    when(io.instructionIn.funct3 === "b101".U && ALU.aluResult === 0.U) {   // BGE
+      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
+      io.PCOverride := true.B
+    }
+    when(io.instructionIn.funct3 === "b110".U && ALU.aluResult === 1.U) {   // BLTU
+      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
+      io.PCOverride := true.B
+    }
+    when(io.instructionIn.funct3 === "b111".U && ALU.aluResult === 0.U) {   // BGEU
+      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
+      io.PCOverride := true.B
+    }
+    //printf(p"Instruction: ${io.instructionIn}\n")
+  }
+
+  //printf(p"PC=0x${Hexadecimal(io.PCIn)} instr=0x${Hexadecimal(io.instructionIn.instruction)} rd=${io.instructionIn.registerRd} rs1=${io.instructionIn.registerRs1} rs2=${io.instructionIn.registerRs2} a=${io.registerData1} b=${io.registerData2} ALUop=${io.aluOp} ALU=0x${Hexadecimal(ALU.aluResult)} zero=${ALU.zeroFlag} branch=${io.controlSignalsOut.branch} PCOverride=${io.PCOverride} jump=0x${Hexadecimal(io.jumpAddress)}\n")
 
 
 

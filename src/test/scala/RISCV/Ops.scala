@@ -111,6 +111,7 @@ object Ops {
   case class AUIPC(rd: Reg, imm: Imm) extends Op with UType
 
   case class JALR(rd: Reg, rs1: Reg, dst: String) extends Op with IType
+  //case class JALR(rd: Reg, rs1: Reg, offset: Imm) extends Op with IType
   case class JAL(rd: Reg, dst: String) extends Op with UType
   case class SW(rs2: Reg, rs1: Reg, offset: Imm) extends Op with SType
   case class LW(rd: Reg, rs1: Reg, offset: Imm)  extends Op with IType
@@ -121,6 +122,7 @@ object Ops {
 
   object JAL{ def apply(rd: Int, dst: String): JAL = JAL(Reg(rd), dst) }
   object JALR{ def apply(rd: Int, rs1: Int, dst: String): JALR = JALR(Reg(rd), Reg(rs1), dst) }
+  //object JALR{ def apply(rd: Int, rs1: Int, offset: Int): JALR = JALR(Reg(rd), Reg(rs1), Imm(offset)) }
   object SW  { def apply(rs2: Int, rs1: Int, offset: Int): SW = SW(Reg(rs2), Reg(rs1), Imm(offset)) }
   object LW  { def apply(rd: Int, rs1: Int, offset: Int): LW = LW(Reg(rd), Reg(rs1), Imm(offset)) }
 

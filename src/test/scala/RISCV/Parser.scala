@@ -107,6 +107,7 @@ object Parser {
     ////////////////////////////////////////////
     //// Jumps
     stringWs("jalr")  ~> (reg <~ sep, reg <~ sep, label).mapN{JALR.apply},
+    //stringWs("jalr")  ~> (reg <~ sep, (hex | int) <~ char('('), reg <~ char(')')).mapN{JALR.apply},
     stringWs("jal")   ~> (reg <~ sep, label).mapN{JAL.apply},
 
     // pseudos
