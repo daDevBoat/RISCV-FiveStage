@@ -49,11 +49,14 @@ class MemoryFetch() extends MultiIOModule {
   io.aluResultOut := io.aluResultIn
   io.memDataOut := 0.U
 
-  DMEM.io.dataAddress := io.memoryAddress
+  DMEM.io.dataAddress := io.aluResultIn
   DMEM.io.dataIn      := 0.U
   DMEM.io.writeEnable := false.B
 
-  when(io.controlSignalsIn.memRead) {
+  val memReadReg = Reg(Bool())
+  memReadReg := io.controlSignalsIn.memRead
+
+  when(io.controlSignalsIn.memRead || memReadReg) {
     io.memDataOut := DMEM.io.dataOut
     //printf(p"memDataOut = ${io.memDataOut} and address = ${DMEM.io.dataAddress} \n")
   }.elsewhen(io.controlSignalsIn.memWrite) {

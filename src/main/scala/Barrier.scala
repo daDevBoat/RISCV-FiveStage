@@ -169,5 +169,5 @@ class MEMWBBarrier extends Module {
   io.instructionOut := instructionReg
   io.controlSignalsOut := controlSignalsReg
   io.aluResultOut := aluResultReg
-  io.memDataOut := memDataReg
+  io.memDataOut := io.memDataIn
 }
