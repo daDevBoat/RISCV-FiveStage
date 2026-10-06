@@ -33,6 +33,8 @@ class Execute extends MultiIOModule {
     new Bundle {
       val instructionMEM = Input(new Instruction())
       val aluResultMEM = Input(UInt(32.W))
+      val instructionWB = Input(new Instruction())
+      val WBSignal = Input(UInt(32.W))
 
     })
 
@@ -106,11 +108,15 @@ class Execute extends MultiIOModule {
   // Forwarding decision unit
   when(FWRio.instructionMEM.registerRd === io.instructionIn.registerRs1) {
     registerData1Forwarded := FWRio.aluResultMEM
-  }.elsewhen(FWRio.instructionMEM.registerRd === io.instructionIn.registerRs2) {
-    registerData2Forwarded := FWRio.aluResultMEM
+  }.elsewhen(FWRio.instructionWB.registerRd === io.instructionIn.registerRs1) {
+    registerData1Forwarded := FWRio.WBSignal
   }
 
-
+  when(FWRio.instructionMEM.registerRd === io.instructionIn.registerRs2) {
+      registerData2Forwarded := FWRio.aluResultMEM
+  }.elsewhen(FWRio.instructionWB.registerRd === io.instructionIn.registerRs2) {
+    registerData2Forwarded := FWRio.WBSignal
+  }
 
   dontTouch(io.aluResult)
   dontTouch(io.immType)

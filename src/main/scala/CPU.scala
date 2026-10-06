@@ -50,6 +50,9 @@ class CPU extends MultiIOModule {
   testHarness.memUpdates := MEM.testHarness.testUpdates
   testHarness.currentPC  := IF.testHarness.PC
 
+  val writeData = Wire(UInt(32.W))
+  writeData := Mux(MEMWBBarrier.controlSignalsOut.memRead, MEMWBBarrier.memDataOut, MEMWBBarrier.aluResultOut)
+
   // All connections between stages:
   connectIFID()
   connectIDEX()
@@ -120,7 +123,7 @@ class CPU extends MultiIOModule {
   private def connectWBID(): Unit = {
     ID.io.writeEnable := MEMWBBarrier.controlSignalsOut.regWrite
     ID.io.writeAddress := MEMWBBarrier.instructionOut.registerRd
-    ID.io.writeData := Mux(MEMWBBarrier.controlSignalsOut.memRead, MEMWBBarrier.memDataOut, MEMWBBarrier.aluResultOut)
+    ID.io.writeData := writeData
   }
 
   private def connectEXJumpToIF(): Unit = {
@@ -129,8 +132,13 @@ class CPU extends MultiIOModule {
   }
 
   private def connectForwaring(): Unit = {
+    // From MEM to EX
     EX.FWRio.instructionMEM := MEM.io.instructionIn
     EX.FWRio.aluResultMEM := MEM.io.aluResultIn
+
+    // From WB to EX
+    EX.FWRio.instructionWB := MEMWBBarrier.instructionOut
+    EX.FWRio.WBSignal := writeData
   }
 
 }
