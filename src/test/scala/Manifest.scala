@@ -19,9 +19,9 @@ import LogParser._
 
 object Manifest {
 
-  val singleTest = "load3.s"
+  val singleTest = "addi.s"
 
-  val nopPadded = true
+  val nopPadded = false
 
   val singleTestOptions = TestOptions(
     printIfSuccessful  = true,

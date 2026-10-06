@@ -26,10 +26,15 @@ class Execute extends MultiIOModule {
       val writeData = Output(UInt(32.W))
       val jumpAddress = Output(UInt(32.W))
       val PCOverride = Output(Bool())
-
-
     }
   )
+
+  val FWRio = IO(
+    new Bundle {
+      val instructionMEM = Input(new Instruction())
+      val aluResultMEM = Input(UInt(32.W))
+
+    })
 
   // Drive the inputs along
   io.instructionOut := io.instructionIn
@@ -42,10 +47,18 @@ class Execute extends MultiIOModule {
   // Set up and use the ALU
   val ALU = Module(new ALU()).io
 
-  ALU.aluOp := io.aluOp
-  ALU.in1 := Mux(io.op1Select === Op1Select.rs1, io.registerData1, 0.U)
 
-  ALU.in2 := Mux(io.op2Select === Op2Select.rs2, io.registerData2, io.instructionIn.getImmediate(io.immType).asUInt())
+  // Wire for alu register input
+  val registerData1Forwarded = Wire(UInt(32.W))
+  val registerData2Forwarded = Wire(UInt(32.W))
+
+  registerData1Forwarded := io.registerData1
+  registerData2Forwarded := io.registerData2
+
+  ALU.aluOp := io.aluOp
+  ALU.in1 := Mux(io.op1Select === Op1Select.rs1, registerData1Forwarded, 0.U)
+
+  ALU.in2 := Mux(io.op2Select === Op2Select.rs2, registerData2Forwarded, io.instructionIn.getImmediate(io.immType).asUInt())
   io.aluResult := ALU.aluResult
 
   // Jump logic
@@ -90,8 +103,12 @@ class Execute extends MultiIOModule {
     //printf(p"Instruction: ${io.instructionIn}\n")
   }
 
-  //printf(p"PC=0x${Hexadecimal(io.PCIn)} instr=0x${Hexadecimal(io.instructionIn.instruction)} rd=${io.instructionIn.registerRd} rs1=${io.instructionIn.registerRs1} rs2=${io.instructionIn.registerRs2} a=${io.registerData1} b=${io.registerData2} ALUop=${io.aluOp} ALU=0x${Hexadecimal(ALU.aluResult)} zero=${ALU.zeroFlag} branch=${io.controlSignalsOut.branch} PCOverride=${io.PCOverride} jump=0x${Hexadecimal(io.jumpAddress)}\n")
-
+  // Forwarding decision unit
+  when(FWRio.instructionMEM.registerRd === io.instructionIn.registerRs1) {
+    registerData1Forwarded := FWRio.aluResultMEM
+  }.elsewhen(FWRio.instructionMEM.registerRd === io.instructionIn.registerRs2) {
+    registerData2Forwarded := FWRio.aluResultMEM
+  }
 
 
 

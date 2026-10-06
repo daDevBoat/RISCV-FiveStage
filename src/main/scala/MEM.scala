@@ -32,7 +32,6 @@ class MemoryFetch() extends MultiIOModule {
       val memDataOut = Output(UInt(32.W))
     })
 
-
   val DMEM = Module(new DMEM)
 
 

@@ -51,13 +51,15 @@ class CPU extends MultiIOModule {
   testHarness.currentPC  := IF.testHarness.PC
 
   // All connections between stages:
-  // --------------------------------------------------
   connectIFID()
   connectIDEX()
   connectEXMEM()
   connectMEMWB()
   connectWBID()
   connectEXJumpToIF()
+
+  // Connections for the forwarding unit
+  connectForwaring()
 
   private def connectIFID(): Unit = {
     // set up the IFID barrier functionality (driving the signals)
@@ -124,6 +126,11 @@ class CPU extends MultiIOModule {
   private def connectEXJumpToIF(): Unit = {
     IF.io.PCOverride := EX.io.PCOverride
     IF.io.PCIn := EX.io.jumpAddress
+  }
+
+  private def connectForwaring(): Unit = {
+    EX.FWRio.instructionMEM := MEM.io.instructionIn
+    EX.FWRio.aluResultMEM := MEM.io.aluResultIn
   }
 
 }
