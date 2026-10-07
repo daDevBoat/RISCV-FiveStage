@@ -103,14 +103,13 @@ class CPU extends MultiIOModule {
     EXMEMBarrier.PCIn := EX.io.PCOut
     EXMEMBarrier.controlSignalsIn := EX.io.controlSignalsOut
     EXMEMBarrier.aluResultIn := EX.io.aluResult
-    EXMEMBarrier.writeDataIn := EX.io.registerData2
+    EXMEMBarrier.writeDataIn := EX.io.writeData
 
     MEM.io.instructionIn := EXMEMBarrier.instructionOut
     MEM.io.PCIn := EXMEMBarrier.PCOut
     MEM.io.controlSignalsIn := EXMEMBarrier.controlSignalsOut
     MEM.io.aluResultIn := EXMEMBarrier.aluResultOut
     MEM.io.writeData := EXMEMBarrier.writeDataOut
-    MEM.io.memoryAddress := EXMEMBarrier.memoryAddress
   }
 
   private def connectMEMWB(): Unit = {
@@ -133,12 +132,22 @@ class CPU extends MultiIOModule {
 
   private def connectForwaring(): Unit = {
     // From MEM to EX
-    EX.FWRio.instructionMEM := MEM.io.instructionIn
+    EX.FWRio.instructionMEM := MEM.io.instructionOut
     EX.FWRio.aluResultMEM := MEM.io.aluResultIn
+    EX.FWRio.memRead := MEM.io.controlSignalsOut.memRead
+    EX.FWRio.memReadData := MEM.io.memDataOut
 
     // From WB to EX
     EX.FWRio.instructionWB := MEMWBBarrier.instructionOut
     EX.FWRio.WBData := writeData
+
+    // From FWR unit to IF and barriers
+    IF.io.stallSignal := EX.FWRio.stallSignal
+    IFIDBarrier.stallSignal := EX.FWRio.stallSignal
+    IDEXBarrier.stallSignal := EX.FWRio.stallSignal
+    EXMEMBarrier.stallSignal := EX.FWRio.stallSignal
+    MEM.io.stallSignal := EX.FWRio.stallSignal
+    MEMWBBarrier.stallSignal := EX.FWRio.stallSignal
   }
 
 }

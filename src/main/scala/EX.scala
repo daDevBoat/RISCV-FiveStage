@@ -35,6 +35,10 @@ class Execute extends MultiIOModule {
       val aluResultMEM = Input(UInt(32.W))
       val instructionWB = Input(new Instruction())
       val WBData = Input(UInt(32.W))
+      val memRead = Input(Bool())
+      val memReadData = Input(UInt(32.W))
+
+      val stallSignal = Output(Bool())
 
     })
 
@@ -42,7 +46,6 @@ class Execute extends MultiIOModule {
   io.instructionOut := io.instructionIn
   io.PCOut := io.PCIn
   io.controlSignalsOut := io.controlSignalsIn
-  io.writeData := io.registerData2
   io.jumpAddress := 0.U
   io.PCOverride := false.B
 
@@ -59,6 +62,14 @@ class Execute extends MultiIOModule {
   FWR.WBData := FWRio.WBData
   FWR.registerData1In := io.registerData1
   FWR.registerData2In := io.registerData2
+  FWR.memRead := FWRio.memRead
+  FWR.memReadData := FWRio.memReadData
+
+  // Drive the rs2 data from FWR to writeData
+  io.writeData := FWR.registerData2Out
+
+  // Drive the stallSignal
+  FWRio.stallSignal := FWR.stallSignal
 
   // Take the output signals from the FWR unit and drive into the ALU
   ALU.aluOp := io.aluOp
