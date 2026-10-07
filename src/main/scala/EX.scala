@@ -34,7 +34,7 @@ class Execute extends MultiIOModule {
       val instructionMEM = Input(new Instruction())
       val aluResultMEM = Input(UInt(32.W))
       val instructionWB = Input(new Instruction())
-      val WBSignal = Input(UInt(32.W))
+      val WBData = Input(UInt(32.W))
 
     })
 
@@ -46,21 +46,25 @@ class Execute extends MultiIOModule {
   io.jumpAddress := 0.U
   io.PCOverride := false.B
 
-  // Set up and use the ALU
   val ALU = Module(new ALU()).io
+  val FWR = Module(new FWR()).io
 
+  /* Forwarding logic */
 
-  // Wire for alu register input
-  val registerData1Forwarded = Wire(UInt(32.W))
-  val registerData2Forwarded = Wire(UInt(32.W))
+  // Input signals into the FWR unit
+  FWR.instructionEX := io.instructionIn
+  FWR.instructionMEM := FWRio.instructionMEM
+  FWR.instructionWB := FWRio.instructionWB
+  FWR.aluResultMEM := FWRio.aluResultMEM
+  FWR.WBData := FWRio.WBData
+  FWR.registerData1In := io.registerData1
+  FWR.registerData2In := io.registerData2
 
-  registerData1Forwarded := io.registerData1
-  registerData2Forwarded := io.registerData2
-
+  // Take the output signals from the FWR unit and drive into the ALU
   ALU.aluOp := io.aluOp
-  ALU.in1 := Mux(io.op1Select === Op1Select.rs1, registerData1Forwarded, 0.U)
+  ALU.in1 := Mux(io.op1Select === Op1Select.rs1, FWR.registerData1Out, 0.U)
 
-  ALU.in2 := Mux(io.op2Select === Op2Select.rs2, registerData2Forwarded, io.instructionIn.getImmediate(io.immType).asUInt())
+  ALU.in2 := Mux(io.op2Select === Op2Select.rs2, FWR.registerData2Out, io.instructionIn.getImmediate(io.immType).asUInt())
   io.aluResult := ALU.aluResult
 
   // Jump logic
@@ -106,17 +110,7 @@ class Execute extends MultiIOModule {
   }
 
   // Forwarding decision unit
-  when(FWRio.instructionMEM.registerRd === io.instructionIn.registerRs1) {
-    registerData1Forwarded := FWRio.aluResultMEM
-  }.elsewhen(FWRio.instructionWB.registerRd === io.instructionIn.registerRs1) {
-    registerData1Forwarded := FWRio.WBSignal
-  }
 
-  when(FWRio.instructionMEM.registerRd === io.instructionIn.registerRs2) {
-      registerData2Forwarded := FWRio.aluResultMEM
-  }.elsewhen(FWRio.instructionWB.registerRd === io.instructionIn.registerRs2) {
-    registerData2Forwarded := FWRio.WBSignal
-  }
 
   dontTouch(io.aluResult)
   dontTouch(io.immType)

@@ -138,7 +138,7 @@ class CPU extends MultiIOModule {
 
     // From WB to EX
     EX.FWRio.instructionWB := MEMWBBarrier.instructionOut
-    EX.FWRio.WBSignal := writeData
+    EX.FWRio.WBData := writeData
   }
 
 }
