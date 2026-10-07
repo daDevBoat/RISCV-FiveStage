@@ -9,17 +9,33 @@ class IFIDBarrier extends Module {
       val instructionIn = Input(new Instruction())
       val instructionOut = Output(new Instruction())
       val PCIn = Input(UInt(32.W))
+      val stallSignal = Input(Bool())
       val PCOut = Output(UInt(32.W))
     }
   )
 
   // Driving the instruction straight through
+  // Delaying the PC by one cycle
+
+  val PCReg = RegInit(0.U(32.W))
+  val instructionReg = Reg(new Instruction())
+  val stallSignalReg = Reg(Bool())
+
+  instructionReg := io.instructionIn
+  stallSignalReg := io.stallSignal
+
+  io.PCOut := PCReg
   io.instructionOut := io.instructionIn
 
-  // Delaying the PC by one cycle
-  val PCReg = RegInit(0.U(32.W))
-  PCReg := io.PCIn
-  io.PCOut := PCReg
+  when(!io.stallSignal) {
+    when(stallSignalReg) {
+      io.instructionOut := instructionReg
+    }.otherwise {
+      io.instructionOut := io.instructionIn
+    }
+    PCReg := io.PCIn
+  }
+
 
   // So it does not get optimised away in the early stages of development
   dontTouch(io.PCIn)
@@ -39,6 +55,7 @@ class IDEXBarrier extends Module {
       val ALUopIn = Input(UInt(4.W))
       val registerData1In = Input(UInt(32.W))
       val registerData2In = Input(UInt(32.W))
+      val stallSignal = Input(Bool())
 
       val PCOut = Output(UInt(32.W))
       val instructionOut = Output(new Instruction())
@@ -55,44 +72,41 @@ class IDEXBarrier extends Module {
   )
 
   // Delaying everything by one cycle
+  // Registers
   val instructionReg = Reg(new Instruction())
-  instructionReg := io.instructionIn
-  io.instructionOut := instructionReg
-
   val PCReg = RegInit(0.U(32.W))
-  PCReg := io.PCIn
-  io.PCOut := PCReg
-
   val controlSignalsReg = Reg(new ControlSignals())
-  controlSignalsReg := io.controlSignalsIn
-  io.controlSignalsOut := controlSignalsReg
-
   val branchTypeReg = Reg(UInt(3.W))
-  branchTypeReg := io.branchTypeIn
-  io.branchTypeOut := branchTypeReg
-
   val op1SelectReg = Reg(UInt(1.W))
-  op1SelectReg := io.op1SelectIn
-  io.op1SelectOut := op1SelectReg
-
   val op2SelectReg = Reg(UInt(1.W))
-  op2SelectReg := io.op2SelectIn
-  io.op2SelectOut := op2SelectReg
-
   val immTypeReg = Reg(UInt(3.W))
-  immTypeReg := io.immTypeIn
-  io.immTypeOut := immTypeReg
-
   val ALUopReg = Reg(UInt(4.W))
-  ALUopReg := io.ALUopIn
-  io.ALUopOut := ALUopReg
-
   val registerData1Reg = Reg(UInt(32.W))
-  registerData1Reg := io.registerData1In
-  io.registerData1Out := registerData1Reg
-
   val registerData2Reg = Reg(UInt(32.W))
-  registerData2Reg := io.registerData2In
+
+  // Register updates
+  when(!io.stallSignal) {
+    instructionReg := io.instructionIn
+    PCReg := io.PCIn
+    controlSignalsReg := io.controlSignalsIn
+    branchTypeReg := io.branchTypeIn
+    op1SelectReg := io.op1SelectIn
+    op2SelectReg := io.op2SelectIn
+    immTypeReg := io.immTypeIn
+    ALUopReg := io.ALUopIn
+    registerData1Reg := io.registerData1In
+    registerData2Reg := io.registerData2In
+  }
+  // Outputs
+  io.instructionOut := instructionReg
+  io.PCOut := PCReg
+  io.controlSignalsOut := controlSignalsReg
+  io.branchTypeOut := branchTypeReg
+  io.op1SelectOut := op1SelectReg
+  io.op2SelectOut := op2SelectReg
+  io.immTypeOut := immTypeReg
+  io.ALUopOut := ALUopReg
+  io.registerData1Out := registerData1Reg
   io.registerData2Out := registerData2Reg
 
   // So it does not get optimised away in the early stages of development
@@ -109,12 +123,12 @@ class EXMEMBarrier extends Module {
       val controlSignalsIn = Input(new ControlSignals())
       val aluResultIn = Input(UInt(32.W))
       val writeDataIn = Input(UInt(32.W))
+      val stallSignal = Input(Bool())
 
       val instructionOut = Output(new Instruction())
       val PCOut = Output(UInt(32.W))
       val controlSignalsOut = Output(new ControlSignals())
       val aluResultOut = Output(UInt(32.W))
-      val memoryAddress = Output(UInt(32.W))
       val writeDataOut = Output(UInt(32.W))
     }
   )
@@ -137,8 +151,6 @@ class EXMEMBarrier extends Module {
   io.aluResultOut := aluResultReg
   io.writeDataOut := writeDataReg
 
-  // Driving the memory address since the memory takes on cycle to fetch data
-  io.memoryAddress := io.aluResultIn
 }
 
 class MEMWBBarrier extends Module {
@@ -148,6 +160,7 @@ class MEMWBBarrier extends Module {
       val controlSignalsIn = Input(new ControlSignals())
       val aluResultIn = Input(UInt(32.W))
       val memDataIn = Input(UInt(32.W))
+      val stallSignal = Input(Bool())
 
       val instructionOut = Output(new Instruction())
       val controlSignalsOut = Output(new ControlSignals())
@@ -160,14 +173,18 @@ class MEMWBBarrier extends Module {
   val controlSignalsReg = Reg(new ControlSignals())
   val aluResultReg = Reg(UInt(32.W))
   val memDataReg = Reg(UInt(32.W))
+  val stallSignalReg = Reg(Bool())
 
   instructionReg := io.instructionIn
   controlSignalsReg := io.controlSignalsIn
   aluResultReg := io.aluResultIn
   memDataReg := io.memDataIn
+  stallSignalReg := io.stallSignal
+
 
   io.instructionOut := instructionReg
   io.controlSignalsOut := controlSignalsReg
   io.aluResultOut := aluResultReg
   io.memDataOut := io.memDataIn
+
 }

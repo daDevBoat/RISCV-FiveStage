@@ -25,6 +25,7 @@ class InstructionFetch extends MultiIOModule {
     new Bundle {
       val PCOverride = Input(Bool())
       val PCIn = Input(UInt(32.W))
+      val stallSignal = Input(Bool())
 
       val PC = Output(UInt())
       val instruction = Output(new Instruction())
@@ -45,7 +46,9 @@ class InstructionFetch extends MultiIOModule {
   when(io.PCOverride) {
     PC := io.PCIn
   }.otherwise {
-    PC := PC + 4.U
+    when(!io.stallSignal) {
+      PC := PC + 4.U
+    }
   }
 
   io.PC := PC
