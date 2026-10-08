@@ -37,9 +37,12 @@ class Execute extends MultiIOModule {
       val WBData = Input(UInt(32.W))
       val memRead = Input(Bool())
       val memReadData = Input(UInt(32.W))
+      val WBregWrite = Input(Bool())
+      val memRegWrite = Input(Bool())
 
       val stallSignal = Output(Bool())
-
+      val registerData1Out = Output(UInt(32.W))
+      val registerData2Out = Output(UInt(32.W))
     })
 
   // Drive the inputs along
@@ -64,12 +67,16 @@ class Execute extends MultiIOModule {
   FWR.registerData2In := io.registerData2
   FWR.memRead := FWRio.memRead
   FWR.memReadData := FWRio.memReadData
+  FWR.WBregWrite := FWRio.WBregWrite
+  FWR.memRegWrite := FWRio.memRegWrite
 
   // Drive the rs2 data from FWR to writeData
   io.writeData := FWR.registerData2Out
 
-  // Drive the stallSignal
+  // Drive the stallSignal and out data
   FWRio.stallSignal := FWR.stallSignal
+  FWRio.registerData1Out := FWR.registerData1Out
+  FWRio.registerData2Out := FWR.registerData2Out
 
   // Take the output signals from the FWR unit and drive into the ALU
   ALU.aluOp := io.aluOp
@@ -86,45 +93,43 @@ class Execute extends MultiIOModule {
     when(io.instructionIn.opcode === "b1101111".U) {  // JAR
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateJType.pad(32)).asUInt()
     }.elsewhen(io.instructionIn.opcode === "b1100111".U) {  // JAL
-      io.jumpAddress := (io.registerData1.asSInt() + io.instructionIn.immediateIType.pad(32)).asUInt() & "hfffffffe".U
+      io.jumpAddress := (FWR.registerData1Out.asSInt() + io.instructionIn.immediateIType.pad(32)).asUInt() & "hfffffffe".U
     }
   }
 
   // Branch logic
 
-  when(io.controlSignalsIn.branch && io.instructionIn.opcode === "b1100011".U) {
-    when(io.instructionIn.funct3 === "b0".U && ALU.zeroFlag) {    // BEQ
+  when(io.controlSignalsIn.branch && !FWR.stallSignal) {
+    when(io.branchType === branchType.beq && ALU.zeroFlag) {    // BEQ
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b1".U && ALU.zeroFlag === false.B) {    // BNE
+    when(io.branchType === branchType.neq && ALU.zeroFlag === false.B) {    // BNE
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b100".U && ALU.aluResult === 1.U) {   // BLT
+    when(io.branchType === branchType.lt && ALU.aluResult === 1.U) {   // BLT
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b101".U && ALU.aluResult === 0.U) {   // BGE
+    when(io.branchType === branchType.gte && ALU.aluResult === 0.U) {   // BGE
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b110".U && ALU.aluResult === 1.U) {   // BLTU
+    when(io.branchType === branchType.ltu && ALU.aluResult === 1.U) {   // BLTU
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b111".U && ALU.aluResult === 0.U) {   // BGEU
+    when(io.branchType === branchType.gteu && ALU.aluResult === 0.U) {   // BGEU
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
     //printf(p"Instruction: ${io.instructionIn}\n")
   }
 
-  // Forwarding decision unit
-
-
   dontTouch(io.aluResult)
   dontTouch(io.immType)
+  dontTouch(ALU.in1)
 
 
 
