@@ -70,4 +70,7 @@ class FWR extends MultiIOModule {
       io.registerData2Out := io.WBData
     }
   }
+
+  dontTouch(io.registerData1Out)
+  dontTouch(io.registerData2Out)
 }

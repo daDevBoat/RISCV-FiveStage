@@ -11,6 +11,7 @@ class IFIDBarrier extends Module {
       val PCIn = Input(UInt(32.W))
       val stallSignal = Input(Bool())
       val PCOut = Output(UInt(32.W))
+      val flushSignal = Input(Bool())
     }
   )
 
@@ -36,6 +37,10 @@ class IFIDBarrier extends Module {
     PCReg := io.PCIn
   }
 
+  when (io.flushSignal) {
+    instructionReg := Instruction.NOP
+    io.instructionOut := Instruction.NOP
+  }
 
   // So it does not get optimised away in the early stages of development
   dontTouch(io.PCIn)
@@ -56,6 +61,7 @@ class IDEXBarrier extends Module {
       val registerData1In = Input(UInt(32.W))
       val registerData2In = Input(UInt(32.W))
       val stallSignal = Input(Bool())
+      val flushSignal = Input(Bool())
 
       val PCOut = Output(UInt(32.W))
       val instructionOut = Output(new Instruction())
@@ -84,7 +90,7 @@ class IDEXBarrier extends Module {
   val registerData1Reg = Reg(UInt(32.W))
   val registerData2Reg = Reg(UInt(32.W))
 
-  // Register updates
+
   when(!io.stallSignal) {
     instructionReg := io.instructionIn
     PCReg := io.PCIn
@@ -96,6 +102,11 @@ class IDEXBarrier extends Module {
     ALUopReg := io.ALUopIn
     registerData1Reg := io.registerData1In
     registerData2Reg := io.registerData2In
+  }
+
+  when (io.flushSignal) {
+    instructionReg := Instruction.NOP
+    controlSignalsReg := ControlSignals.nop
   }
   // Outputs
   io.instructionOut := instructionReg

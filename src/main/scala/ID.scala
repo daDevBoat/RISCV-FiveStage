@@ -60,7 +60,7 @@ class InstructionDecode extends MultiIOModule {
   io.registerData2 := registers.io.readData2
 
   // Forwarding of data if writeback and read happens in the same cycle
-  when(io.writeEnable) {
+  when(io.writeEnable && io.writeAddress =/= 0.U) {
     when(io.writeAddress === io.instructionIn.registerRs1) {
       io.registerData1 := io.writeData
     }

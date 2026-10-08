@@ -86,7 +86,7 @@ class Execute extends MultiIOModule {
     when(io.instructionIn.opcode === "b1101111".U) {  // JAR
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateJType.pad(32)).asUInt()
     }.elsewhen(io.instructionIn.opcode === "b1100111".U) {  // JAL
-      io.jumpAddress := (io.registerData1.asSInt() + io.instructionIn.immediateIType.pad(32)).asUInt() & "hfffffffe".U
+      io.jumpAddress := (FWR.registerData1Out.asSInt() + io.instructionIn.immediateIType.pad(32)).asUInt() & "hfffffffe".U
     }
   }
 
@@ -122,6 +122,7 @@ class Execute extends MultiIOModule {
 
   dontTouch(io.aluResult)
   dontTouch(io.immType)
+  dontTouch(ALU.in1)
 
 
 

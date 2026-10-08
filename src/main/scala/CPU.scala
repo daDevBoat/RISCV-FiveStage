@@ -59,7 +59,7 @@ class CPU extends MultiIOModule {
   connectEXMEM()
   connectMEMWB()
   connectWBID()
-  connectEXJumpToIF()
+  connectEXJumpBranch()
 
   // Connections for the forwarding unit
   connectForwaring()
@@ -125,9 +125,12 @@ class CPU extends MultiIOModule {
     ID.io.writeData := writeData
   }
 
-  private def connectEXJumpToIF(): Unit = {
+  private def connectEXJumpBranch(): Unit = {
     IF.io.PCOverride := EX.io.PCOverride
     IF.io.PCIn := EX.io.jumpAddress
+
+    IFIDBarrier.flushSignal := EX.io.PCOverride
+    IDEXBarrier.flushSignal := EX.io.PCOverride
   }
 
   private def connectForwaring(): Unit = {

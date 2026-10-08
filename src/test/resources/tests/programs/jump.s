@@ -2,9 +2,12 @@ main:
     jal x2, test
     addi x3, x0, 15
 test:
-    addi x1, x0, 100
-    jr x1
+    addi x1, x0, 10
+    j test3
 test2:
-    addi x1, x0, 14
     addi x1, x0, 12
+    addi x1, x0, 14
+test3:
+    addi x1, x0, 16
+    addi x1, x0, 18
     done
