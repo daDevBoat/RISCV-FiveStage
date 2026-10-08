@@ -100,9 +100,9 @@ class IDEXBarrier extends Module {
     op2SelectReg := io.op2SelectIn
     immTypeReg := io.immTypeIn
     ALUopReg := io.ALUopIn
-    registerData1Reg := io.registerData1In
-    registerData2Reg := io.registerData2In
   }
+  registerData1Reg := io.registerData1In
+  registerData2Reg := io.registerData2In
 
   when (io.flushSignal) {
     instructionReg := Instruction.NOP

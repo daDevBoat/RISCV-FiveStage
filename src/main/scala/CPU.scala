@@ -96,6 +96,11 @@ class CPU extends MultiIOModule {
     EX.io.aluOp := IDEXBarrier.ALUopOut
     EX.io.registerData1 := IDEXBarrier.registerData1Out
     EX.io.registerData2 := IDEXBarrier.registerData2Out
+
+    when(EX.FWRio.stallSignal) {
+      IDEXBarrier.registerData1In := EX.FWRio.registerData1Out
+      IDEXBarrier.registerData2In := EX.FWRio.registerData2Out
+    }
   }
 
   private def connectEXMEM(): Unit = {
@@ -126,11 +131,31 @@ class CPU extends MultiIOModule {
   }
 
   private def connectEXJumpBranch(): Unit = {
-    IF.io.PCOverride := EX.io.PCOverride
-    IF.io.PCIn := EX.io.jumpAddress
+    val PCOverrideReg = Reg(Bool())
+    val jumpAddressReg = Reg(UInt(32.W))
+    val stallSignalReg = Reg(Bool())
 
+    PCOverrideReg := EX.io.PCOverride
+    jumpAddressReg := EX.io.jumpAddress
+    stallSignalReg := EX.FWRio.stallSignal
+
+    IF.io.PCIn := EX.io.jumpAddress
+    IF.io.PCOverride := EX.io.PCOverride
     IFIDBarrier.flushSignal := EX.io.PCOverride
     IDEXBarrier.flushSignal := EX.io.PCOverride
+
+    when(EX.FWRio.stallSignal) {
+      IF.io.PCIn := 0.U
+      IF.io.PCOverride := false.B
+      IFIDBarrier.flushSignal := false.B
+      IDEXBarrier.flushSignal := false.B
+    }.elsewhen(stallSignalReg) {
+      IF.io.PCIn := jumpAddressReg
+      IF.io.PCOverride := PCOverrideReg
+      IFIDBarrier.flushSignal := PCOverrideReg
+      IDEXBarrier.flushSignal := PCOverrideReg
+    }
+
   }
 
   private def connectForwaring(): Unit = {

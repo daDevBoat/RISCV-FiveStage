@@ -23,7 +23,12 @@ class FWR extends MultiIOModule {
   )
 
   val memReadReg = Reg(Bool())
+  val memRdReg = RegInit(UInt(5.W), 0.U)
   memReadReg := io.memRead
+
+  when(io.memRead) {
+    memRdReg := io.instructionMEM.registerRd
+  }
 
   dontTouch(memReadReg)
   io.stallSignal := false.B
@@ -35,7 +40,7 @@ class FWR extends MultiIOModule {
   //printf(p"EXInst = 0x${Hexadecimal(io.instructionEX.instruction)}  EXRs1 = ${io.instructionEX.registerRs1}  EXRs2 = ${io.instructionEX.registerRs2} \n")
   //printf(p"MEMInst = 0x${Hexadecimal(io.instructionMEM.instruction)}  MEMRd = ${io.instructionMEM.registerRd} \n")
   when (io.instructionEX.registerRs1 =/= 0.U) {
-    when(memReadReg && (io.instructionMEM.registerRd === io.instructionEX.registerRs1)) {
+    when(memReadReg && memRdReg === io.instructionEX.registerRs1 && (io.instructionMEM.registerRd === io.instructionEX.registerRs1)) {
       io.registerData1Out := io.memReadData
       //printf("Forwarded something\n")
       //printf("MEM -> EX forwarding of MEM Read Data\n")
@@ -52,14 +57,26 @@ class FWR extends MultiIOModule {
     }.elsewhen(io.instructionWB.registerRd === io.instructionEX.registerRs1) {
       //printf("Forwarded something\n")
       io.registerData1Out := io.WBData
+      /*
+      printf(p"memRead = ${io.memRead} memReadReg = ${memReadReg}\n")
+      printf(p"EXInst = 0x${Hexadecimal(io.instructionEX.instruction)}  EXRs1 = ${io.instructionEX.registerRs1}  EXRs2 = ${io.instructionEX.registerRs2} \n")
+      printf(p"WBInst = 0x${Hexadecimal(io.instructionWB.instruction)}  MEMRd = ${io.instructionWB.registerRd} \n")
+
+       */
     }
   }
 
   //printf("\n")
 
   when (io.instructionEX.registerRs2 =/= 0.U) {
-    when(memReadReg && (io.instructionMEM.registerRd === io.instructionEX.registerRs2)) {
+    when(memReadReg && memRdReg === io.instructionEX.registerRs2 && (io.instructionMEM.registerRd === io.instructionEX.registerRs2)) {
       io.registerData2Out := io.memReadData
+      /*
+      printf(p"RS2 MEMDATA: memRead = ${io.memRead} memReadReg = ${memReadReg}\n")
+      printf(p"EXInst = 0x${Hexadecimal(io.instructionEX.instruction)}  EXRs1 = ${io.instructionEX.registerRs1}  EXRs2 = ${io.instructionEX.registerRs2} \n")
+      printf(p"WBInst = 0x${Hexadecimal(io.instructionWB.instruction)}  MEMRd = ${io.instructionWB.registerRd} \n")
+
+       */
     }.elsewhen(io.instructionMEM.registerRd === io.instructionEX.registerRs2) {
       when(io.memRead) {
         io.stallSignal := true.B
@@ -68,9 +85,17 @@ class FWR extends MultiIOModule {
       }
     }.elsewhen(io.instructionWB.registerRd === io.instructionEX.registerRs2) {
       io.registerData2Out := io.WBData
+      /*
+      printf(p"RS2: memRead = ${io.memRead} memReadReg = ${memReadReg}\n")
+      printf(p"EXInst = 0x${Hexadecimal(io.instructionEX.instruction)}  EXRs1 = ${io.instructionEX.registerRs1}  EXRs2 = ${io.instructionEX.registerRs2} \n")
+      printf(p"WBInst = 0x${Hexadecimal(io.instructionWB.instruction)}  MEMRd = ${io.instructionWB.registerRd} \n")
+
+       */
     }
   }
 
+
+  //printf("\n")
   dontTouch(io.registerData1Out)
   dontTouch(io.registerData2Out)
 }

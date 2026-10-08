@@ -39,7 +39,8 @@ class Execute extends MultiIOModule {
       val memReadData = Input(UInt(32.W))
 
       val stallSignal = Output(Bool())
-
+      val registerData1Out = Output(UInt(32.W))
+      val registerData2Out = Output(UInt(32.W))
     })
 
   // Drive the inputs along
@@ -68,8 +69,10 @@ class Execute extends MultiIOModule {
   // Drive the rs2 data from FWR to writeData
   io.writeData := FWR.registerData2Out
 
-  // Drive the stallSignal
+  // Drive the stallSignal and out data
   FWRio.stallSignal := FWR.stallSignal
+  FWRio.registerData1Out := FWR.registerData1Out
+  FWRio.registerData2Out := FWR.registerData2Out
 
   // Take the output signals from the FWR unit and drive into the ALU
   ALU.aluOp := io.aluOp
