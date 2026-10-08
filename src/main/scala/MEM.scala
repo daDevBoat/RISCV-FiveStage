@@ -53,16 +53,8 @@ class MemoryFetch() extends MultiIOModule {
   DMEM.io.writeEnable := false.B
 
   val memReadReg = Reg(Bool())
-  val stallSignalReg = Reg(Bool())
-
-
-  when(stallSignalReg) {
-    io.instructionOut := Instruction.NOP
-    io.controlSignalsOut := ControlSignals.nop
-  }
 
   memReadReg := io.controlSignalsOut.memRead
-  stallSignalReg := io.stallSignal
 
   when(io.controlSignalsIn.memRead || memReadReg) {
     io.memDataOut := DMEM.io.dataOut

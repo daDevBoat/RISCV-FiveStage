@@ -145,6 +145,14 @@ class EXMEMBarrier extends Module {
   aluResultReg := io.aluResultIn
   writeDataReg := io.writeDataIn
 
+  when(io.stallSignal) {
+    instructionReg := Instruction.NOP
+    controlSignalsReg := ControlSignals.nop
+    PCReg := 0.U
+    aluResultReg := 0.U
+    writeDataReg := 0.U
+  }
+
   io.instructionOut := instructionReg
   io.PCOut := PCReg
   io.controlSignalsOut := controlSignalsReg
