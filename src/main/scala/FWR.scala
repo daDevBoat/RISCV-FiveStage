@@ -37,6 +37,7 @@ class FWR extends MultiIOModule {
   when (io.instructionEX.registerRs1 =/= 0.U) {
     when(memReadReg && (io.instructionMEM.registerRd === io.instructionEX.registerRs1)) {
       io.registerData1Out := io.memReadData
+      //printf("Forwarded something\n")
       //printf("MEM -> EX forwarding of MEM Read Data\n")
       //printf(p"FORWARDING: memReadReg=${memReadReg} memRead=${io.memRead} MEMrd=${io.instructionMEM.registerRd} EXrs1=${io.instructionEX.registerRs1}\n")
     }.elsewhen(io.instructionMEM.registerRd === io.instructionEX.registerRs1) {
@@ -45,9 +46,11 @@ class FWR extends MultiIOModule {
         //printf("Stalling\n")
       }.otherwise {
         io.registerData1Out := io.aluResultMEM
+        //printf("Forwarded something\n")
         //printf("MEM -> EX Forwarding of ALU result\n")
       }
     }.elsewhen(io.instructionWB.registerRd === io.instructionEX.registerRs1) {
+      //printf("Forwarded something\n")
       io.registerData1Out := io.WBData
     }
   }

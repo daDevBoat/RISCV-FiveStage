@@ -92,36 +92,33 @@ class Execute extends MultiIOModule {
 
   // Branch logic
 
-  when(io.controlSignalsIn.branch && io.instructionIn.opcode === "b1100011".U) {
-    when(io.instructionIn.funct3 === "b0".U && ALU.zeroFlag) {    // BEQ
+  when(io.controlSignalsIn.branch) {
+    when(io.branchType === branchType.beq && ALU.zeroFlag) {    // BEQ
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b1".U && ALU.zeroFlag === false.B) {    // BNE
+    when(io.branchType === branchType.neq && ALU.zeroFlag === false.B) {    // BNE
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b100".U && ALU.aluResult === 1.U) {   // BLT
+    when(io.branchType === branchType.lt && ALU.aluResult === 1.U) {   // BLT
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b101".U && ALU.aluResult === 0.U) {   // BGE
+    when(io.branchType === branchType.gte && ALU.aluResult === 0.U) {   // BGE
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b110".U && ALU.aluResult === 1.U) {   // BLTU
+    when(io.branchType === branchType.ltu && ALU.aluResult === 1.U) {   // BLTU
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
-    when(io.instructionIn.funct3 === "b111".U && ALU.aluResult === 0.U) {   // BGEU
+    when(io.branchType === branchType.gteu && ALU.aluResult === 0.U) {   // BGEU
       io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
       io.PCOverride := true.B
     }
     //printf(p"Instruction: ${io.instructionIn}\n")
   }
-
-  // Forwarding decision unit
-
 
   dontTouch(io.aluResult)
   dontTouch(io.immType)
