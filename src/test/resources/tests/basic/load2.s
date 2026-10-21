@@ -4,10 +4,8 @@ main:
 	addi x3, zero, 4 
 	addi x4, zero, 4 
 	lw x1, 0(x1)
-	add x1, x1, x1
-	lw x1, 0(x1)
-	sw x1, 4(x1)
-	lw x1, 8(x1)
+	add x0, x0, x0
+	addi x5, x1, 2
 	done
 #memset 0x0,  4
 #memset 0x4,  8

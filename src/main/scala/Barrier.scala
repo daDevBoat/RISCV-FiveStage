@@ -11,6 +11,7 @@ class IFIDBarrier extends Module {
       val PCIn = Input(UInt(32.W))
       val stallSignal = Input(Bool())
       val PCOut = Output(UInt(32.W))
+      val flushSignal = Input(Bool())
     }
   )
 
@@ -37,6 +38,12 @@ class IFIDBarrier extends Module {
   }
 
 
+  when (io.flushSignal) {
+    instructionReg := Instruction.NOP
+    io.instructionOut := Instruction.NOP
+  }
+
+
   // So it does not get optimised away in the early stages of development
   dontTouch(io.PCIn)
   dontTouch(io.PCOut)
@@ -56,6 +63,7 @@ class IDEXBarrier extends Module {
       val registerData1In = Input(UInt(32.W))
       val registerData2In = Input(UInt(32.W))
       val stallSignal = Input(Bool())
+      val flushSignal = Input(Bool())
 
       val PCOut = Output(UInt(32.W))
       val instructionOut = Output(new Instruction())
@@ -84,7 +92,7 @@ class IDEXBarrier extends Module {
   val registerData1Reg = Reg(UInt(32.W))
   val registerData2Reg = Reg(UInt(32.W))
 
-  // Register updates
+
   when(!io.stallSignal) {
     instructionReg := io.instructionIn
     PCReg := io.PCIn
@@ -94,9 +102,11 @@ class IDEXBarrier extends Module {
     op2SelectReg := io.op2SelectIn
     immTypeReg := io.immTypeIn
     ALUopReg := io.ALUopIn
-    registerData1Reg := io.registerData1In
-    registerData2Reg := io.registerData2In
   }
+  registerData1Reg := io.registerData1In
+  registerData2Reg := io.registerData2In
+
+
   // Outputs
   io.instructionOut := instructionReg
   io.PCOut := PCReg
@@ -108,6 +118,11 @@ class IDEXBarrier extends Module {
   io.ALUopOut := ALUopReg
   io.registerData1Out := registerData1Reg
   io.registerData2Out := registerData2Reg
+
+  when (io.flushSignal) {
+    instructionReg := Instruction.NOP
+    controlSignalsReg := ControlSignals.nop
+  }
 
   // So it does not get optimised away in the early stages of development
   dontTouch(io.PCIn)
@@ -148,9 +163,6 @@ class EXMEMBarrier extends Module {
   when(io.stallSignal) {
     instructionReg := Instruction.NOP
     controlSignalsReg := ControlSignals.nop
-    PCReg := 0.U
-    aluResultReg := 0.U
-    writeDataReg := 0.U
   }
 
   io.instructionOut := instructionReg
