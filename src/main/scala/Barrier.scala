@@ -12,6 +12,8 @@ class IFIDBarrier extends Module {
       val stallSignal = Input(Bool())
       val PCOut = Output(UInt(32.W))
       val flushSignal = Input(Bool())
+      val branchPredictedTakenIn = Input(Bool())
+      val branchPredictedTakenOut = Output(Bool())
     }
   )
 
@@ -21,12 +23,14 @@ class IFIDBarrier extends Module {
   val PCReg = RegInit(0.U(32.W))
   val instructionReg = Reg(new Instruction())
   val stallSignalReg = Reg(Bool())
+  val branchPredictedTakenReg = Reg(Bool())
 
   instructionReg := io.instructionIn
   stallSignalReg := io.stallSignal
 
   io.PCOut := PCReg
   io.instructionOut := io.instructionIn
+  io.branchPredictedTakenOut := branchPredictedTakenReg
 
   when(!io.stallSignal) {
     when(stallSignalReg) {
@@ -35,6 +39,7 @@ class IFIDBarrier extends Module {
       io.instructionOut := io.instructionIn
     }
     PCReg := io.PCIn
+    branchPredictedTakenReg := io.branchPredictedTakenIn
   }
 
 
@@ -64,6 +69,7 @@ class IDEXBarrier extends Module {
       val registerData2In = Input(UInt(32.W))
       val stallSignal = Input(Bool())
       val flushSignal = Input(Bool())
+      val branchPredictedTakenIn = Input(Bool())
 
       val PCOut = Output(UInt(32.W))
       val instructionOut = Output(new Instruction())
@@ -75,6 +81,7 @@ class IDEXBarrier extends Module {
       val ALUopOut = Output(UInt(4.W))
       val registerData1Out = Output(UInt(32.W))
       val registerData2Out = Output(UInt(32.W))
+      val branchPredictedTakenOut = Output(Bool())
 
     }
   )
@@ -91,6 +98,7 @@ class IDEXBarrier extends Module {
   val ALUopReg = Reg(UInt(4.W))
   val registerData1Reg = Reg(UInt(32.W))
   val registerData2Reg = Reg(UInt(32.W))
+  val branchPredictedTakenReg = Reg(Bool())
 
 
   when(!io.stallSignal) {
@@ -102,6 +110,7 @@ class IDEXBarrier extends Module {
     op2SelectReg := io.op2SelectIn
     immTypeReg := io.immTypeIn
     ALUopReg := io.ALUopIn
+    branchPredictedTakenReg := io.branchPredictedTakenIn
   }
   registerData1Reg := io.registerData1In
   registerData2Reg := io.registerData2In
@@ -118,6 +127,7 @@ class IDEXBarrier extends Module {
   io.ALUopOut := ALUopReg
   io.registerData1Out := registerData1Reg
   io.registerData2Out := registerData2Reg
+  io.branchPredictedTakenOut := branchPredictedTakenReg
 
   when (io.flushSignal) {
     instructionReg := Instruction.NOP

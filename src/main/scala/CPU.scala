@@ -68,10 +68,12 @@ class CPU extends MultiIOModule {
     // set up the IFID barrier functionality (driving the signals)
     IFIDBarrier.PCIn := IF.io.PC
     IFIDBarrier.instructionIn := IF.io.instruction
+    IFIDBarrier.branchPredictedTakenIn := IF.io.branchPredictedTaken
 
     // Drives the signals from the barrier to the ID
     ID.io.instructionIn := IFIDBarrier.instructionOut
     ID.io.PCIn := IFIDBarrier.PCOut
+    ID.io.branchPredictedTakenIn := IFIDBarrier.branchPredictedTakenOut
   }
 
   private def connectIDEX(): Unit = {
@@ -85,6 +87,7 @@ class CPU extends MultiIOModule {
     IDEXBarrier.ALUopIn := ID.io.ALUop
     IDEXBarrier.registerData1In := ID.io.registerData1
     IDEXBarrier.registerData2In := ID.io.registerData2
+    IDEXBarrier.branchPredictedTakenIn := ID.io.branchPredictedTakenOut
 
     EX.io.instructionIn := IDEXBarrier.instructionOut
     EX.io.PCIn := IDEXBarrier.PCOut
@@ -96,6 +99,7 @@ class CPU extends MultiIOModule {
     EX.io.aluOp := IDEXBarrier.ALUopOut
     EX.io.registerData1 := IDEXBarrier.registerData1Out
     EX.io.registerData2 := IDEXBarrier.registerData2Out
+    EX.io.branchPredictedTaken := IDEXBarrier.branchPredictedTakenOut
 
     when(EX.FWRio.stallSignal) {
       IDEXBarrier.registerData1In := EX.FWRio.registerData1Out
@@ -155,6 +159,11 @@ class CPU extends MultiIOModule {
       IFIDBarrier.flushSignal := PCOverrideReg
       IDEXBarrier.flushSignal := PCOverrideReg
     }
+
+    // Branch predictor signals
+    IF.io.branchWasTaken := EX.io.branchWasTaken
+    IF.io.updateBranchPredictor := EX.io.updateBranchPredictor
+    IF.io.PCOfBranchTaken := EX.io.PCOut
 
   }
 

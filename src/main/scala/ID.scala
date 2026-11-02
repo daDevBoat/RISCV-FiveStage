@@ -23,6 +23,7 @@ class InstructionDecode extends MultiIOModule {
       val writeEnable = Input(Bool())
       val writeAddress = Input(UInt(5.W))
       val writeData = Input(UInt(32.W))
+      val branchPredictedTakenIn = Input(Bool())
 
       val instructionOut = Output(new Instruction())
       val PCOut = Output(UInt(32.W))
@@ -32,6 +33,7 @@ class InstructionDecode extends MultiIOModule {
       val op2Select = Output(UInt(1.W))
       val immType = Output(UInt(3.W))
       val ALUop = Output(UInt(4.W))
+      val branchPredictedTakenOut = Output(Bool())
 
       val registerData1 = Output(UInt(32.W))
       val registerData2 = Output(UInt(32.W))
@@ -83,96 +85,12 @@ class InstructionDecode extends MultiIOModule {
   // Drive the PC and instruction as outputs for the barrier inputs
   io.instructionOut := io.instructionIn
   io.PCOut := io.PCIn
+  io.branchPredictedTakenOut := io.branchPredictedTakenIn
 
-  /* Decode the instruction to find the ALU op */
-
-
-
-
-
-
-
-
-  /*
-  def decoder (): Unit = {
-    switch(inst.opcode) {
-      // R-types
-      is("b0110011".U) {
-        switch(inst.funct3) {
-          // ADD or SUB
-          is("b000".U) {
-            switch(inst.funct7) {
-              // ADD
-              is("b0000000".U) {
-                inst.instructionType := InstrType.ADD
-                inst.aluOp := ALUOps.ADD
-              }
-              is("b0100000".U) {
-                inst.instructionType := InstrType.SUB
-                inst.aluOp := ALUOps.SUB
-              }
-            }
-          }
-          // AND
-          is("b111".U) {
-            inst.instructionType := InstrType.AND
-            inst.aluOp := ALUOps.AND
-          }
-          // OR
-          is("b110".U) {
-            inst.instructionType := InstrType.OR
-            inst.aluOp := ALUOps.OR
-          }
-          // XOR
-          is("b100".U) {
-            inst.instructionType := InstrType.XOR
-            inst.aluOp := ALUOps.XOR
-          }
-          // SLT
-          is("b010".U) {
-            inst.instructionType := InstrType.SLT
-            inst.aluOp := ALUOps.SLT
-          }
-          // SLTU
-          is("b011".U) {
-            inst.instructionType := InstrType.SLTU
-            inst.aluOp := ALUOps.SLTU
-          }
-          // SRA or SRL
-          is("b101".U) {
-            switch(inst.funct7) {
-              // SRA
-              is("b0100000".U) {
-                inst.instructionType := InstrType.SRA
-                inst.aluOp := ALUOps.SRA
-              }
-              // SRL
-              is("b0000000".U) {
-                inst.instructionType := InstrType.SRL
-                inst.aluOp := ALUOps.SRL
-              }
-            }
-          }
-          // SLL
-          is("b001".U) {
-            inst.instructionType := InstrType.SLL
-            inst.aluOp := ALUOps.SLL
-          }
-        }
-      }
-
-      // I-types
-      is("b0010011".U) {
-
-      }
-
-    }
-
-
-
+  when (io.branchPredictedTakenIn && !decoder.controlSignals.branch) {
+    io.instructionOut := Instruction.NOP
+    io.controlSignals := ControlSignals.nop
   }
-
-  */
 
 }
 

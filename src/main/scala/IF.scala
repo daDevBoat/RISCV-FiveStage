@@ -26,9 +26,13 @@ class InstructionFetch extends MultiIOModule {
       val PCOverride = Input(Bool())
       val PCIn = Input(UInt(32.W))
       val stallSignal = Input(Bool())
+      val branchWasTaken = Input(Bool())
+      val updateBranchPredictor = Input(Bool())
+      val PCOfBranchTaken = Input(UInt(32.W))
 
       val PC = Output(UInt())
       val instruction = Output(new Instruction())
+      val branchPredictedTaken = Output(Bool())
     })
 
   val IMEM = Module(new IMEM)
@@ -43,9 +47,32 @@ class InstructionFetch extends MultiIOModule {
 
   io.PC := PC
 
+  val instruction = Wire(new Instruction)
+  instruction := IMEM.io.instruction.asTypeOf(new Instruction)
+  io.instruction := instruction
+
+
+  // Branch predictor
+  val branchPredictor = Module(new BranchPredictor)
+  branchPredictor.io.branchWasTaken := io.branchWasTaken
+  branchPredictor.io.updateFlag := io.updateBranchPredictor
+  branchPredictor.io.PCOfBranchTaken := io.PCOfBranchTaken
+  branchPredictor.io.branchTarget := io.PCIn
+
+  branchPredictor.io.PC := PC
+  io.branchPredictedTaken := branchPredictor.io.branchPredictedTaken
+
+
+
+  // PC override logic
   when(io.PCOverride) {
     io.PC := io.PCIn
     PC := io.PCIn + 4.U
+  }.elsewhen(branchPredictor.io.BTBHit && branchPredictor.io.branchPredictedTaken) {
+    PC := branchPredictor.io.predictedTarget
+    printf(p"Predicted target 0x${Hexadecimal(branchPredictor.io.predictedTarget)} \n")
+    //PC := PC + 4.U
+
   }.otherwise {
     when(!io.stallSignal) {
       PC := PC + 4.U
@@ -53,11 +80,6 @@ class InstructionFetch extends MultiIOModule {
   }
 
   IMEM.io.instructionAddress := io.PC
-
-  val instruction = Wire(new Instruction)
-  instruction := IMEM.io.instruction.asTypeOf(new Instruction)
-  io.instruction := instruction
-
 
 
   /**

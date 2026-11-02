@@ -1,7 +1,8 @@
 package FiveStage
 import chisel3._
-import chisel3.util.{BitPat, MuxCase}
+import chisel3.util._
 import chisel3.experimental.{MultiIOModule, dontTouch}
+import scala.collection.mutable.Seq
 
 
 class Execute extends MultiIOModule {
@@ -18,6 +19,8 @@ class Execute extends MultiIOModule {
       val aluOp = Input(UInt(4.W))
       val registerData1 = Input(UInt(32.W))
       val registerData2 = Input(UInt(32.W))
+      val branchPredictedTaken = Input(Bool())
+
 
       val instructionOut = Output(new Instruction())
       val PCOut = Output(UInt(32.W))
@@ -26,6 +29,8 @@ class Execute extends MultiIOModule {
       val writeData = Output(UInt(32.W))
       val jumpAddress = Output(UInt(32.W))
       val PCOverride = Output(Bool())
+      val branchWasTaken = Output(Bool())
+      val updateBranchPredictor = Output(Bool())
     }
   )
 
@@ -51,6 +56,8 @@ class Execute extends MultiIOModule {
   io.controlSignalsOut := io.controlSignalsIn
   io.jumpAddress := 0.U
   io.PCOverride := false.B
+  io.branchWasTaken := false.B
+  io.updateBranchPredictor := false.B
 
   val ALU = Module(new ALU()).io
   val FWR = Module(new FWR()).io
@@ -99,33 +106,38 @@ class Execute extends MultiIOModule {
 
   // Branch logic
 
+  val branchTaken = Wire(Bool())
+
+  branchTaken := MuxLookup(io.branchType, false.B, Seq(
+    branchType.beq  -> ALU.zeroFlag,
+    branchType.neq  -> !ALU.zeroFlag,
+    branchType.lt   -> (ALU.aluResult === 1.U),
+    branchType.gte  -> (ALU.aluResult === 0.U),
+    branchType.ltu  -> (ALU.aluResult === 1.U),
+    branchType.gteu -> (ALU.aluResult === 0.U)
+  ))
+
+
   when(io.controlSignalsIn.branch && !FWR.stallSignal) {
-    when(io.branchType === branchType.beq && ALU.zeroFlag) {    // BEQ
-      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
-      io.PCOverride := true.B
+    when(branchTaken) {
+      when(!io.branchPredictedTaken) {
+        io.PCOverride := true.B
+        //printf(p"JUMP address 0x${Hexadecimal(io.jumpAddress)} \n")
+      }
     }
-    when(io.branchType === branchType.neq && ALU.zeroFlag === false.B) {    // BNE
-      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
+
+    io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32).asSInt()).asUInt
+    io.branchWasTaken := branchTaken
+    io.updateBranchPredictor := true.B
+    //printf(p"Branch at PC 0x${Hexadecimal(io.PCIn)} predicted: ${io.branchPredictedTaken} \n")
+
+    when(io.branchPredictedTaken && !branchTaken) {
+      io.jumpAddress := io.PCIn + 4.U
       io.PCOverride := true.B
+      //printf(p"Branch at PC 0x${Hexadecimal(io.PCIn)} predicted taken but was not taken. \n")
     }
-    when(io.branchType === branchType.lt && ALU.aluResult === 1.U) {   // BLT
-      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
-      io.PCOverride := true.B
-    }
-    when(io.branchType === branchType.gte && ALU.aluResult === 0.U) {   // BGE
-      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
-      io.PCOverride := true.B
-    }
-    when(io.branchType === branchType.ltu && ALU.aluResult === 1.U) {   // BLTU
-      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
-      io.PCOverride := true.B
-    }
-    when(io.branchType === branchType.gteu && ALU.aluResult === 0.U) {   // BGEU
-      io.jumpAddress := (io.PCIn.asSInt() + io.instructionIn.immediateBType.pad(32)).asUInt()
-      io.PCOverride := true.B
-    }
-    //printf(p"Instruction: ${io.instructionIn}\n")
   }
+
 
   dontTouch(io.aluResult)
   dontTouch(io.immType)
